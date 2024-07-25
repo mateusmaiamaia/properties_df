@@ -8,5 +8,7 @@ CREATE TABLE properties (
     price VARCHAR(50),
     sqm_price VARCHAR(50),
     area VARCHAR(50)
+    city VARCHAR(50)
+    link VARCHAR(255)
 );
 

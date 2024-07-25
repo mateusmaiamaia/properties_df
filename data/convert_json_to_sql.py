@@ -20,7 +20,9 @@ with open(input_file, 'r') as f_in, open(output_file, 'w') as f_out:
             title=escape_string(item['title']),
             price=escape_string(item['price']),
             sqm_price=escape_string(item['sqm_price']),
-            area=escape_string(item['area'])
+            area=escape_string(item['area']),
+            city=escape_string(item['city']),
+            link=escape_string(item['link'])
         )
         write_utf8_encoded(f_out, sql_command)
 

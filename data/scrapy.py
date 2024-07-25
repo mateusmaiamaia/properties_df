@@ -2,23 +2,32 @@ import requests
 import json
 from bs4 import BeautifulSoup
 import time
+import logging
+import random
 
-# Cabeçalhos para imitar um navegador real
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Referer': 'https://www.google.com/'
-}
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
 
-# Função para criar uma sopa (parser) da URL
+# List of User Agents for rotating user agents
+user_agents = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:88.0) Gecko/20100101 Firefox/88.0',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
+]
+
+def get_random_user_agent():
+    return random.choice(user_agents)
+
 def make_soup(url, session):
-    response = session.get(url, headers=headers)
+    response = session.get(url, headers={'User-Agent': get_random_user_agent()})
     response.raise_for_status()
     return BeautifulSoup(response.text, 'html.parser')
 
-# Função para extrair links da página
 def extract_links_from_page(url, session):
-    response = session.get(url, headers=headers)
+    response = session.get(url, headers={'User-Agent': get_random_user_agent()})
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -27,67 +36,62 @@ def extract_links_from_page(url, session):
     page_links = []
     for link in links:
         href = link.get('href')
-        full_url = f'https://www.dfimoveis.com.br{href}'  # URL completa do link
+        full_url = f'https://www.dfimoveis.com.br{href}'  
         page_links.append(full_url)
 
     return page_links
 
-# Função para raspar todas as páginas
 def scrape_all_pages(base_url, last_page):
     session = requests.Session()
     all_links = []
 
     for page in range(1, last_page + 1):
         url = f'{base_url}?pagina={page}'
-        print(f'Raspando página {page}... {url}')
 
         try:
             links = extract_links_from_page(url, session)
-            print(f'Encontrados {len(links)} links na página {page}')
             all_links.extend(links)
+            logger.info(f"Successfully scraped page {page}")
+        except requests.HTTPError as e:
+            logger.error(f"HTTP error on page {page}: {e}")
+        except requests.RequestException as e:
+            logger.error(f"Error on page {page}: {e}")
         except Exception as e:
-            print(f'Erro ao raspar página {page}: {e}')
-            continue
+            logger.error(f"Unexpected error on page {page}: {e}")
+
+        time.sleep(0.1)  # To avoid being blocked
 
     return all_links
 
-# Função para obter o título
-def get_title(link, session):
-    soup = make_soup(link, session)
+def get_title(soup):
     title = soup.find('div', {'class': 'col-9'})
-    if title:
-        return title.text.strip()
-    return "Título não encontrado"
+    return title.text.strip() if title else "Título não encontrado"
 
-# Função para obter o preço
-def get_price(link, session):
-    soup = make_soup(link, session)
+def get_price(soup):
     div = soup.find('div', {'class': 'col-6 pr-0'})
     if div:
         price = div.find('small', {'class': 'display-5 text-warning'})
-        if price:
-            return price.text.strip()
+        return price.text.strip() if price else "Preço não encontrado"
     return "Preço não encontrado"
 
-# Função para obter o preço por m²
-def get_sqm_price(link, session):
-    soup = make_soup(link, session)
+def get_sqm_price(soup):
     sqm_price = soup.find('small', {'class': 'display-5 text-warning m2-valor-salao'})
-    if sqm_price:
-        return sqm_price.text.strip()
-    return "Preço por m² não encontrado"
+    return sqm_price.text.strip() if sqm_price else "Preço por m² não encontrado"
 
-# Função para obter a área
-def get_area(link, session):
-    soup = make_soup(link, session)
+def get_area(soup):
     area = soup.find('small', {'class': 'display-5 text-warning'})
-    if area:
-        return area.text.strip()
-    return "Área não encontrada"
+    return area.text.strip() if area else "Área não encontrada"
+
+def get_city(soup):
+    city_div = soup.find('div', style='display: flex; align-items: center; justify-content: space-between;')
+    if city_div:
+        city = city_div.find('small', {'class': 'text-muted'})
+        return city.text.strip() if city else "Cidade não encontrada"
+    return "Cidade não encontrada"
 
 if __name__ == '__main__':
     BASE_URL = 'https://www.dfimoveis.com.br/venda/df/todos/imoveis'
-    LAST_PAGE = 1407  # Ajuste o número de páginas conforme necessário
+    LAST_PAGE = 1407  
 
     adverts = []
     session = requests.Session()
@@ -95,40 +99,40 @@ if __name__ == '__main__':
     all_links = scrape_all_pages(BASE_URL, LAST_PAGE)
 
     for idx, link in enumerate(all_links):
-        print(f"\nProcessando link {idx + 1}/{len(all_links)}: {link}")
-        
         try:
-            advert_title = get_title(link, session)
-            print(f"Título extraído: {advert_title}")
-
-            advert_price = get_price(link, session)
-            print(f"Preço extraído: {advert_price}")
-
-            advert_sqm_price = get_sqm_price(link, session)
-            print(f"Preço por m² extraído: {advert_sqm_price}")
-
-            advert_area = get_area(link, session)
-            print(f"Área extraída: {advert_area}")
+            soup = make_soup(link, session)
+            advert_title = get_title(soup)
+            advert_price = get_price(soup)
+            advert_sqm_price = get_sqm_price(soup)
+            advert_area = get_area(soup)
+            advert_city = get_city(soup)
 
             advert = {
                 'title': advert_title,
                 'price': advert_price,
                 'sqm_price': advert_sqm_price,
-                'area': advert_area
+                'area': advert_area,
+                'city': advert_city,
+                'link': link  # Add the link to the advert dictionary
             }
 
             adverts.append(advert)
+            logger.info(f"Processed advert {idx + 1}/{len(all_links)}")
+
+            # Print the scraped data for verification
+            print(f"Advert {idx + 1}:")
+            print(json.dumps(advert, indent=4, ensure_ascii=False))
+
+        except requests.HTTPError as e:
+            logger.error(f"HTTP error for link {link}: {e}")
+        except requests.RequestException as e:
+            logger.error(f"Error for link {link}: {e}")
         except Exception as e:
-            print(f"Erro ao processar link {link}: {e}")
-            continue
+            logger.error(f"Unexpected error for link {link}: {e}")
 
-        time.sleep(0.1)  # Adicionando atraso para evitar bloqueio entre requisições
+        time.sleep(0.2)  # To avoid being blocked
 
-    total_links = len(all_links)
-    print(f"Total de links extraídos: {total_links}")
-
-    # Salvar os dados em um arquivo JSON
     with open('adverts.json', 'w') as f:
-        json.dump(adverts, f, indent=4)
+        json.dump(adverts, f, indent=4, ensure_ascii=False)
 
-    print("Dados salvos como JSON em 'adverts.json'.")
+    logger.info("Data saved as JSON in 'adverts.json'.")
