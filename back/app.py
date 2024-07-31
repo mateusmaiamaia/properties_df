@@ -44,6 +44,42 @@ def gerar_grafico():
             plt.title('Relação entre Preço e Metragem dos Imóveis')
             plt.xlabel('Metragem (m²)')
             plt.ylabel('Preço')
+        elif tipo_grafico == 'histograma':
+            dados_filtrados['preco'] = pd.to_numeric(dados_filtrados['preco'], errors='coerce')
+            dados_filtrados['preco'].dropna().plot(kind='hist', bins=20, color='blue', alpha=0.7)
+            plt.title('Distribuição de Preços dos Imóveis')
+            plt.xlabel('Preço')
+            plt.ylabel('Frequência')
+        elif tipo_grafico == 'boxplot':
+            sns.boxplot(data=dados_filtrados, x='cidade', y='preco', palette='Set3')
+            plt.title('Distribuição de Preços por Cidade')
+            plt.xlabel('Cidade')
+            plt.ylabel('Preço')
+        elif tipo_grafico == 'radar':
+            categorias = ['preco', 'sqm_price', 'area']
+            medias = [dados_filtrados[col].mean() for col in categorias]
+            labels = categorias
+            valores = medias + [medias[0]]  # Fechar o gráfico
+
+            fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+            ax.plot(labels, valores, marker='o', color='b')
+            ax.fill(labels, valores, alpha=0.25, color='b')
+            plt.title('Comparação de Atributos dos Imóveis')
+        elif tipo_grafico == 'heatmap':
+            corr = dados_filtrados.corr()
+            sns.heatmap(corr, annot=True, cmap='coolwarm', linewidths=0.5)
+            plt.title('Mapa de Calor das Correlações')
+        elif tipo_grafico == 'mapa_geografico':
+            # Assumindo que há colunas 'latitude' e 'longitude'
+            try:
+                import folium
+                m = folium.Map(location=[dados_filtrados['latitude'].mean(), dados_filtrados['longitude'].mean()], zoom_start=12)
+                for idx, row in dados_filtrados.iterrows():
+                    folium.Marker([row['latitude'], row['longitude']], popup=row['title']).add_to(m)
+                m.save('map.html')
+                return send_file('map.html', mimetype='text/html')
+            except ImportError:
+                return jsonify({"error": "Biblioteca folium não está instalada. Instale-a para usar gráficos de mapas geográficos."}), 500
 
         # Salvar o gráfico em um objeto de bytes
         img = io.BytesIO()
