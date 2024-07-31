@@ -1,31 +1,17 @@
 import React from 'react';
 
 function ReportsPage({ goToHome }) {
+  // Adicionar lógica para geração de relatórios
+
   return (
-    <div style={styles.container}>
-      <div style={styles.content}>
-        <h1>Reports Page</h1>
-        <button style={styles.button} onClick={goToHome}>Voltar para Home</button>
-      </div>
+    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+      <h1>Gerar Relatórios</h1>
+      <p>Adicione aqui a lógica para gerar relatórios.</p>
+      <button onClick={goToHome} style={{ margin: '10px' }}>
+        Voltar para Home
+      </button>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-  },
-  content: {
-    textAlign: 'center',
-  },
-  button: {
-    margin: '10px',
-    padding: '10px 20px',
-    fontSize: '16px',
-  },
-};
 
 export default ReportsPage;
