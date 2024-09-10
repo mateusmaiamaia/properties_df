@@ -1,0 +1,10 @@
+{% extends 'properties/base.html' %}
+
+{% block content %}
+<h2>Relatório de Imóveis</h2>
+<ul>
+    {% for property in properties %}
+    <li>{{ property.title }} - {{ property.price }} - {{ property.city }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}
