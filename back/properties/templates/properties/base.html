@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Imóveis DF</title>
+</head>
+<body>
+    <h1>Imóveis DF</h1>
+    <nav>
+        <a href="{% url 'home' %}">Home</a> |
+        <a href="{% url 'charts' %}">Gráficos</a> |
+        <a href="{% url 'reports' %}">Relatórios</a>
+    </nav>
+    <hr>
+    {% block content %}
+    {% endblock %}
+</body>
+</html>
