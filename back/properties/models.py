@@ -8,5 +8,8 @@ class Property(models.Model):
     city = models.CharField(max_length=100)
     link = models.URLField()
 
+    class Meta:
+        db_table = 'properties' 
+
     def __str__(self):
         return self.title
