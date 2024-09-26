@@ -68,11 +68,15 @@ def get_title(soup):
     return title.text.strip() if title else "Título não encontrado"
 
 def get_price(soup):
-    div = soup.find('div', {'class': 'col-6 pr-0'})
-    if div:
-        price = div.find('small', {'class': 'display-5 text-warning'})
-        return price.text.strip() if price else "Preço não encontrado"
-    return "Preço não encontrado"
+    price_element = soup.find('small', {'class': 'display-5 text-warning precoAntigoSalao'})
+    if price_element:
+        return price_element.text.strip()
+    else:
+        inquiry_element = soup.find('small', {'class': 'display-5 text-warning precoNovoSalao'})
+        if inquiry_element:
+            return "Preço sob consulta"  
+        else:
+            return "Preço não encontrado"  
 
 def get_sqm_price(soup):
     sqm_price = soup.find('small', {'class': 'display-5 text-warning m2-valor-salao'})
@@ -123,7 +127,7 @@ if __name__ == '__main__':
             print(f"Advert {idx + 1}:")
             print(json.dumps(advert, indent=4, ensure_ascii=False))
 
-        except requests.HTTPError as e:
+        except requests.HTTPError as e: 
             logger.error(f"HTTP error for link {link}: {e}")
         except requests.RequestException as e:
             logger.error(f"Error for link {link}: {e}")
@@ -136,3 +140,4 @@ if __name__ == '__main__':
         json.dump(adverts, f, indent=4, ensure_ascii=False)
 
     logger.info("Data saved as JSON in 'adverts.json'.")
+
