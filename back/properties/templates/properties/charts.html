@@ -1,6 +1,22 @@
-{% extends 'properties/base.html' %}
+<h1>Gráficos de Imóveis</h1>
 
-{% block content %}
-<h2>Gráfico de Distribuição de Preços</h2>
-<img src="data:image/png;base64,{{ chart }}" alt="Gráfico de Preços">
-{% endblock %}
+<h2>Distribuição de Preços dos Imóveis</h2>
+<img src="data:image/png;base64,{{ distribuicao_precos }}" alt="Distribuição de Preços">
+
+<h2>Distribuição de Preço por Metro Quadrado</h2>
+<img src="data:image/png;base64,{{ distribuicao_sqm_price }}" alt="Distribuição de Preço por m²">
+
+<h2>Quantidade de Imóveis por Área</h2>
+<img src="data:image/png;base64,{{ area_imoveis }}" alt="Quantidade de Imóveis por Área">
+
+<h2>Preço Médio dos Imóveis por Cidade</h2>
+<img src="data:image/png;base64,{{ comparacao_precos }}" alt="Preço Médio por Cidade">
+
+<h2>Proporção de Imóveis por Faixa de Preço</h2>
+<img src="data:image/png;base64,{{ proporcao_imoveis }}" alt="Proporção por Faixa de Preço">
+
+<h2>Relação entre Área e Preço dos Imóveis</h2>
+<img src="data:image/png;base64,{{ area_vs_preco }}" alt="Relação entre Área e Preço">
+
+<h2>Total de Imóveis por Cidade</h2>
+<img src="data:image/png;base64,{{ total_imoveis }}" alt="Total de Imóveis por Cidade">
