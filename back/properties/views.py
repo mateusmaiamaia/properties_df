@@ -1,10 +1,11 @@
-from django.shortcuts import render
-from .models import Property
 import matplotlib.pyplot as plt
+import numpy as np
 import io
 import base64
 import re
 from django.http import HttpResponse
+from django.shortcuts import render
+from .models import Property
 
 def home(request):
     return render(request, 'properties/home.html')
@@ -23,8 +24,6 @@ def chart_view(request):
         'area_imoveis': area_properties_chart(properties),
         'comparacao_precos': comparison_price_chart(properties),
         'proporcao_imoveis': proportion_price_chart(properties),
-        # Removido 'area_vs_preco':
-        # 'area_vs_preco': area_vs_price_scatter_chart(properties),
         'total_imoveis': total_properties_by_city_chart(properties),
     })
 
@@ -35,26 +34,106 @@ def distribution_price_chart(properties):
         if p.price != 'Sob Consulta' and re.match(r'^\d+', p.price)
     ]
 
-    fig, ax = plt.subplots()
-    ax.hist(prices, bins=10, color='skyblue', edgecolor='black')
-    ax.set_title('Distribuição de Preços dos Imóveis')
-    ax.set_xlabel('Preço (R$)')
-    ax.set_ylabel('Número de Imóveis')
+    # Defina os bins e as faixas corretamente
+    bins = [0, 100000, 300000, 500000, 1000000, 1500000, 2500000, float('inf')]
+    labels = [
+        'R$ 0k', 
+        'R$ 100k', 
+        'R$ 300k',
+        'R$ 500k', 
+        'R$ 1M', 
+        'R$ 1.5M', 
+        'R$ 2.5M'
+    ]
+
+    # Criando o gráfico
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Adicionando o histograma
+    ax1.hist(prices, bins=bins, color='skyblue', edgecolor='black')
+    ax1.set_title('Distribuição de Preços dos Imóveis')
+    ax1.set_xlabel('Preço (R$)')
+    ax1.set_ylabel('Número de Imóveis')
+
+    # Corrigindo ticks e rótulos
+    ax1.set_xticks(bins[:-1])  # Ajusta para usar os limites inferior de bins
+    ax1.set_xticklabels(labels, rotation=45, ha='right')
+
+    # Contagem de imóveis por faixa de preço
+    counts, _ = np.histogram(prices, bins=bins)
+
+    # Criando a tabela
+    table_data = [
+        ['0 a 100', counts[0]],
+        ['100 a 300', counts[1]],
+        ['300 a 500', counts[2]],
+        ['500 a 1.000', counts[3]],
+        ['1.000 a 1.500', counts[4]],
+        ['1.500 a 2.500', counts[5]],
+        ['Acima de 2.500', counts[6]]
+    ]
+
+    ax2.axis('off')
+    table = ax2.table(cellText=table_data, colLabels=['Preço em mil', 'Quantidade'], loc='center', cellLoc='center')
+    table.scale(1, 2)
+
+    plt.subplots_adjust(wspace=0.5)
 
     return convert_to_base64(fig)
 
 def distribution_sqm_price_chart(properties):
+    # Filtrar e processar os preços por metro quadrado
     sqm_prices = [
         int(p.sqm_price.replace('R$', '').replace('.', '').replace(',', '').strip()) 
         for p in properties 
-        if p.sqm_price != 'Sob Consulta' and re.match(r'^\d+', p.sqm_price)
+        if p.sqm_price != 'Sob Consulta' and 
+           re.match(r'^\d+', p.sqm_price) and 
+           p.sqm_price.replace('R$', '').replace('.', '').replace(',', '').strip().isdigit()
     ]
 
-    fig, ax = plt.subplots()
-    ax.hist(sqm_prices, bins=10, color='lightgreen', edgecolor='black')
-    ax.set_title('Distribuição de Preço por Metro Quadrado dos Imóveis')
-    ax.set_xlabel('Preço por m² (R$)')
-    ax.set_ylabel('Número de Imóveis')
+    # Definindo os bins e labels
+    bins = np.arange(0, 61000, 10000)  # Isso terá 7 limites
+    labels = [
+        '0 a 10k',
+        '10 a 20k',
+        '20 a 30k',
+        '30 a 40k',
+        '40 a 50k',
+        '50 a 60k',
+        '60k ou mais'
+    ]
+
+    # Criando o gráfico
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Adicionando o histograma
+    ax1.hist(sqm_prices, bins=bins, color='lightgreen', edgecolor='black')
+    ax1.set_title('Distribuição de Preço por Metro Quadrado dos Imóveis')
+    ax1.set_xlabel('Preço por m² (R$)')
+    ax1.set_ylabel('Número de Imóveis')
+
+    # Corrigindo ticks e rótulos
+    ax1.set_xticks(bins)
+    ax1.set_xticklabels(labels, rotation=45, ha='right')
+
+    # Contagem de imóveis por faixa de preço
+    counts, _ = np.histogram(sqm_prices, bins)
+
+    # Criando a tabela
+    table_data = []
+    for i in range(len(counts)):
+        label = labels[i] if i < len(labels) else 'Outros'
+        table_data.append([label, counts[i]])
+
+    # Adicionando '60k ou mais' se necessário
+    if len(counts) < len(labels):
+        table_data.append(['60k ou mais', 0])  # Ajuste conforme necessário
+
+    ax2.axis('off')
+    table = ax2.table(cellText=table_data, colLabels=['Preço por m²', 'Quantidade'], loc='center', cellLoc='center')
+    table.scale(1, 2)
+
+    plt.subplots_adjust(wspace=0.5)
 
     return convert_to_base64(fig)
 
@@ -149,8 +228,6 @@ def proportion_price_chart(properties):
     ax.set_title('Proporção de Imóveis por Faixa de Preço')
 
     return convert_to_base64(fig)
-
-# A função area_vs_price_scatter_chart foi removida
 
 def total_properties_by_city_chart(properties):
     city_counts = {}
