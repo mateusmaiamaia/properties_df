@@ -1,6 +1,7 @@
 from django.db import models
 
 class Property(models.Model):
+    id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=255)
     price = models.CharField(max_length=100)
     sqm_price = models.CharField(max_length=100)
