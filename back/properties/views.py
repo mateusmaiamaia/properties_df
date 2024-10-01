@@ -49,35 +49,33 @@ def distribution_price_chart(properties):
     # Criando o gráfico
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    # Adicionando o histograma
-    ax1.hist(prices, bins=bins, color='skyblue', edgecolor='black')
-    ax1.set_title('Distribuição de Preços dos Imóveis')
-    ax1.set_xlabel('Preço (R$)')
-    ax1.set_ylabel('Número de Imóveis')
+    if prices:
+        # Contagem de imóveis por faixa de preço
+        counts, _ = np.histogram(prices, bins=bins)
 
-    # Corrigindo ticks e rótulos
-    ax1.set_xticks(bins[:-1])  # Ajusta para usar os limites inferior de bins
-    ax1.set_xticklabels(labels, rotation=45, ha='right')
+        # Posições das barras
+        x_positions = np.arange(len(labels))
 
-    # Contagem de imóveis por faixa de preço
-    counts, _ = np.histogram(prices, bins=bins)
+        # Criando o histograma com barras coladas
+        ax1.bar(x_positions, counts, color='skyblue', edgecolor='black', width=0.8)
+        ax1.set_title('Distribuição de Preços dos Imóveis')
+        ax1.set_xlabel('Preço (R$)')
+        ax1.set_ylabel('Número de Imóveis')
 
-    # Criando a tabela
-    table_data = [
-        ['0 a 100', counts[0]],
-        ['100 a 300', counts[1]],
-        ['300 a 500', counts[2]],
-        ['500 a 1.000', counts[3]],
-        ['1.000 a 1.500', counts[4]],
-        ['1.500 a 2.500', counts[5]],
-        ['Acima de 2.500', counts[6]]
-    ]
+        # Corrigindo ticks e rótulos
+        ax1.set_xticks(x_positions)
+        ax1.set_xticklabels(labels, rotation=45, ha='right')
 
-    ax2.axis('off')
-    table = ax2.table(cellText=table_data, colLabels=['Preço em mil', 'Quantidade'], loc='center', cellLoc='center')
-    table.scale(1, 2)
+        # Criando a tabela
+        table_data = [
+            [labels[i], counts[i]] for i in range(len(counts))
+        ]
 
-    plt.subplots_adjust(wspace=0.5)
+        ax2.axis('off')
+        table = ax2.table(cellText=table_data, colLabels=['Faixa de Preço', 'Quantidade'], loc='center', cellLoc='center')
+        table.scale(1, 2)
+
+        plt.subplots_adjust(wspace=0.5)
 
     return convert_to_base64(fig)
 
@@ -106,74 +104,95 @@ def distribution_sqm_price_chart(properties):
     # Criando o gráfico
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    # Adicionando o histograma
-    ax1.hist(sqm_prices, bins=bins, color='lightgreen', edgecolor='black')
-    ax1.set_title('Distribuição de Preço por Metro Quadrado dos Imóveis')
-    ax1.set_xlabel('Preço por m² (R$)')
-    ax1.set_ylabel('Número de Imóveis')
+    if sqm_prices:
+        # Adicionando o histograma
+        counts, _ = np.histogram(sqm_prices, bins=bins)
 
-    # Corrigindo ticks e rótulos
-    ax1.set_xticks(bins)
-    ax1.set_xticklabels(labels, rotation=45, ha='right')
+        # Create x_positions based on counts' length
+        x_positions = np.arange(len(counts))
 
-    # Contagem de imóveis por faixa de preço
-    counts, _ = np.histogram(sqm_prices, bins)
+        # Criando o histograma com barras coladas
+        ax1.bar(x_positions, counts, color='lightgreen', edgecolor='black', width=0.8)
+        ax1.set_title('Distribuição de Preço por Metro Quadrado dos Imóveis')
+        ax1.set_xlabel('Preço por m² (R$)')
+        ax1.set_ylabel('Número de Imóveis')
 
-    # Criando a tabela
-    table_data = []
-    for i in range(len(counts)):
-        label = labels[i] if i < len(labels) else 'Outros'
-        table_data.append([label, counts[i]])
+        # Corrigindo ticks e rótulos
+        ax1.set_xticks(x_positions)
+        ax1.set_xticklabels(labels[:len(counts)], rotation=45, ha='right')
 
-    # Adicionando '60k ou mais' se necessário
-    if len(counts) < len(labels):
-        table_data.append(['60k ou mais', 0])  # Ajuste conforme necessário
+        # Criando a tabela
+        table_data = [
+            [labels[i], counts[i]] for i in range(len(counts))
+        ]
 
-    ax2.axis('off')
-    table = ax2.table(cellText=table_data, colLabels=['Preço por m²', 'Quantidade'], loc='center', cellLoc='center')
-    table.scale(1, 2)
+        ax2.axis('off')
+        table = ax2.table(cellText=table_data, colLabels=['Preço por m²', 'Quantidade'], loc='center', cellLoc='center')
+        table.scale(1, 2)
 
-    plt.subplots_adjust(wspace=0.5)
+        plt.subplots_adjust(wspace=0.5)
 
     return convert_to_base64(fig)
 
 def area_properties_chart(properties):
-    fig, ax = plt.subplots()
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))  # Tamanho da figura
     areas = []
-    
+
     for p in properties:
-        # Debug print para ver as áreas sendo processadas
         print(f"Processing property: {p.title}, area: {p.area}")
-        
-        # Verifica se a área é um intervalo
+
         if 'a' in p.area:
             area_range = p.area.split('a')
-            # Remover 'm²' e espaços antes de converter
             area_max_str = area_range[1].replace('m²', '').strip()
             area_min_str = area_range[0].replace('m²', '').strip()
-            
-            if area_max_str and area_min_str:  # Verifica se não estão vazios
+            if area_max_str and area_min_str:
                 try:
                     area_max = float(area_max_str.replace('.', '').replace(',', '.'))
                     area_min = float(area_min_str.replace('.', '').replace(',', '.'))
-                    areas.append((area_min + area_max) / 2)  # Média do intervalo
+                    areas.append((area_min + area_max) / 2)
                 except ValueError:
                     print(f"Erro ao converter área: max='{area_max_str}', min='{area_min_str}'")
         else:
             area_cleaned = p.area.replace('m²', '').strip()
-            if area_cleaned:  # Verifica se não está vazio
+            if area_cleaned:
                 try:
-                    areas.append(int(float(area_cleaned.replace('.', '').replace(',', '.'))))  # Remover 'm²'
+                    areas.append(int(float(area_cleaned.replace('.', '').replace(',', '.'))))
                 except ValueError:
                     print(f"Erro ao converter área: '{area_cleaned}'")
-                    
-    if areas:  # Apenas plotar se houver áreas
-        ax.hist(areas, bins=10, color='skyblue', edgecolor='black')
-        ax.set_title('Distribuição de Área dos Imóveis')
-        ax.set_xlabel('Área (m²)')
-        ax.set_ylabel('Número de Imóveis')
-    else:
-        print("Nenhuma área válida encontrada.")
+
+    # Define os bins
+    bins = [0, 50, 100, 200, 300, 500, 1000, float('inf')]
+    if areas:
+        # Cria o histograma
+        counts, _ = np.histogram(areas, bins=bins)
+
+        # Posições das barras
+        x_labels = ['0 a 50 m²', '50 a 100 m²', '100 a 200 m²', 
+                    '200 a 300 m²', '300 a 500 m²', '500 a 1000 m²', 
+                    'Acima de 1000 m²']
+        x_positions = np.arange(len(x_labels))
+
+        # Adicionando o histograma
+        ax1.bar(x_positions, counts, color='skyblue', edgecolor='black')
+        ax1.set_title('Distribuição de Área dos Imóveis')
+        ax1.set_xlabel('Área (m²)')
+        ax1.set_ylabel('Número de Imóveis')
+
+        # Ajustando ticks e rótulos
+        ax1.set_xticks(x_positions)
+        ax1.set_xticklabels(x_labels, rotation=45, ha='right')
+
+        # Criando a tabela
+        table_data = []
+        for i in range(len(counts)):
+            label = x_labels[i] if i < len(x_labels) else 'Outros'
+            table_data.append([label, counts[i]])
+
+        ax2.axis('off')
+        table = ax2.table(cellText=table_data, colLabels=['Faixa de Área (m²)', 'Quantidade'], loc='center', cellLoc='center')
+        table.scale(1, 1.5)  # Ajuste a escala da tabela
+
+        plt.subplots_adjust(wspace=0.5)
 
     return convert_to_base64(fig)
 
