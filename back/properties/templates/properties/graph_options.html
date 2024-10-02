@@ -1,0 +1,12 @@
+
+{% block content %}
+    <h1>Escolha um Gráfico</h1>
+    <ul>
+        <li><a href="{% url 'distribution_price_chart' %}">Distribuição de Preços</a></li>
+        <li><a href="{% url 'distribution_sqm_price_chart' %}">Distribuição de Preço por Metro Quadrado</a></li>
+        <li><a href="{% url 'area_properties_chart' %}">Distribuição de Área dos Imóveis</a></li>
+        <li><a href="{% url 'comparison_price_chart' %}">Comparação de Preços por Cidade</a></li>
+        <li><a href="{% url 'proportion_price_chart' %}">Proporção de Imóveis por Faixa de Preço</a></li>
+        <li><a href="{% url 'total_properties_by_city_chart' %}">Total de Imóveis por Cidade</a></li>
+    </ul>
+{% endblock %}

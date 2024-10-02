@@ -1,0 +1,6 @@
+
+{% block content %}
+    <h1>Gráfico de Distribuição de Preços</h1>
+    <img src="data:image/png;base64,{{ chart }}" alt="Gráfico de Distribuição de Preços">
+    <a href="{% url 'graph_options' %}">Voltar</a>
+{% endblock %}

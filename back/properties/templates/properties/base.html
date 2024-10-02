@@ -2,12 +2,29 @@
 <html>
 <head>
     <title>Imóveis DF</title>
+    <style>
+        /* Adicionando estilo responsivo para os gráficos */
+        @media (max-width: 768px) {
+            .chart-container {
+                width: 100%;
+            }
+
+            .chart-container img {
+                max-width: 90%;  /* Ajusta o gráfico para não ocupar 100% da tela em dispositivos móveis */
+                height: auto;  /* Mantém a proporção da imagem */
+            }
+
+            h1, h2 {
+                font-size: 1.5rem;  /* Diminui o tamanho dos títulos em telas menores */
+            }
+        }
+    </style>
 </head>
 <body>
     <h1>Imóveis DF</h1>
     <nav>
         <a href="{% url 'home' %}">Home</a> |
-        <a href="{% url 'charts' %}">Gráficos</a> |
+        <a href="{% url 'graph_options' %}">Ver Gráficos</a> |
         <a href="{% url 'reports' %}">Relatórios</a>
     </nav>
     <hr>
