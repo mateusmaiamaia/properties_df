@@ -1,6 +1,11 @@
-
 {% block content %}
-    <h1>Gráfico de Distribuição de Preços</h1>
-    <img src="data:image/png;base64,{{ chart }}" alt="Gráfico de Distribuição de Preços">
-    <a href="{% url 'graph_options' %}">Voltar</a>
+    <h1 style="text-align: center;">Gráfico de Distribuição de Preços</h1>
+    <div style="text-align: center;">
+        <img src="data:image/png;base64,{{ chart }}" alt="Gráfico de Distribuição de Preços" style="max-width: 100%; height: auto;">
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{% url 'graph_options' %}" style="padding: 10px 20px; background-color: #007BFF; color: white; text-decoration: none; border-radius: 5px;">Voltar</a>
+        <button style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; margin-left: 10px;">Exportar Relatório</button>
+    </div>
 {% endblock %}
