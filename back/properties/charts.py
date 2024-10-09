@@ -23,7 +23,7 @@ def distribution_price_chart(properties):
         'R$ 2.5M'
     ]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    fig, ax1 = plt.subplots(figsize=(12, 6))
 
     if prices:
         counts, _ = np.histogram(prices, bins=bins)
@@ -35,13 +35,6 @@ def distribution_price_chart(properties):
         ax1.set_ylabel('Número de Imóveis')
         ax1.set_xticks(x_positions)
         ax1.set_xticklabels(labels, rotation=45, ha='right')
-
-        # Legenda com as faixas de preço
-        ax2.axis('off')
-        for i, (label, count) in enumerate(zip(labels, counts)):
-            ax2.text(0, len(labels) - i - 1, f"{label}: {count}", fontsize=12, ha='left')
-
-        plt.subplots_adjust(wspace=0.5)
 
     return convert_to_base64(fig)
 
@@ -65,7 +58,7 @@ def distribution_sqm_price_chart(properties):
         '60k ou mais'
     ]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    fig, ax1 = plt.subplots(figsize=(12, 6))
 
     if sqm_prices:
         counts, _ = np.histogram(sqm_prices, bins=bins)
@@ -78,16 +71,10 @@ def distribution_sqm_price_chart(properties):
         ax1.set_xticks(x_positions)
         ax1.set_xticklabels(labels[:len(counts)], rotation=45, ha='right')
 
-        ax2.axis('off')
-        for i, (label, count) in enumerate(zip(labels, counts)):
-            ax2.text(0, len(labels) - i - 1, f"{label}: {count}", fontsize=12, ha='left')
-
-        plt.subplots_adjust(wspace=0.5)
-
     return convert_to_base64(fig)
 
 def area_properties_chart(properties):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    fig, ax1 = plt.subplots(figsize=(12, 6))
     areas = []
 
     for p in properties:
@@ -125,12 +112,6 @@ def area_properties_chart(properties):
         ax1.set_xticks(x_positions)
         ax1.set_xticklabels(x_labels, rotation=45, ha='right')
 
-        ax2.axis('off')
-        for i, (label, count) in enumerate(zip(x_labels, counts)):
-            ax2.text(0, len(x_labels) - i - 1, f"{label}: {count}", fontsize=12, ha='left')
-
-        plt.subplots_adjust(wspace=0.5)
-
     return convert_to_base64(fig)
 
 def comparison_price_chart(properties):
@@ -149,11 +130,12 @@ def comparison_price_chart(properties):
 
     avg_prices = {city: sum(prices) / len(prices) for city, prices in city_prices.items()}
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 6))
     ax.bar(avg_prices.keys(), avg_prices.values(), color='skyblue')
     ax.set_title('Preço Médio dos Imóveis por Cidade')
     ax.set_xlabel('Cidade')
     ax.set_ylabel('Preço Médio (R$)')
+    ax.set_xticklabels(avg_prices.keys(), rotation=45, ha='right')
 
     return convert_to_base64(fig)
 
@@ -206,17 +188,18 @@ def total_properties_by_city_chart(properties):
         else:
             city_counts[city] = 1
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(12, 6))
     ax.bar(city_counts.keys(), city_counts.values(), color='lightblue')
     ax.set_title('Total de Imóveis por Cidade')
     ax.set_xlabel('Cidade')
     ax.set_ylabel('Número Total de Imóveis')
+    ax.set_xticklabels(city_counts.keys(), rotation=45, ha='right')
 
     return convert_to_base64(fig)
 
 def convert_to_base64(fig):
     buf = io.BytesIO()
-    plt.savefig(buf, format='png')
+    plt.savefig(buf, format='png', bbox_inches='tight')
     buf.seek(0)
     image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
