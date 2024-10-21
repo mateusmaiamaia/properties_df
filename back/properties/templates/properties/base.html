@@ -2,13 +2,86 @@
 <html>
 <head>
     <title>Imóveis DF</title>
+    <style>
+        /* Estilo geral para o corpo */
+        body {
+            display: flex;                 /* Usando flexbox para centralizar */
+            flex-direction: column;       /* Coloca os itens em coluna */
+            align-items: center;          /* Centraliza os itens horizontalmente */
+            justify-content: flex-start;  /* Alinha os itens no topo */
+            height: 100vh;                /* Faz o corpo ocupar a altura total da viewport */
+            margin: 0;                    /* Remove margens padrão */
+            font-family: Arial, sans-serif; /* Define uma fonte básica */
+        }
+
+        /* Estilo do título */
+        h1 {
+            font-size: 3rem;              /* Aumenta o tamanho do título */
+            margin: 20px 0;               /* Adiciona margem acima e abaixo do título */
+        }
+
+        /* Estilo da Navbar */
+        nav {
+            background-color: #007BFF;     /* Cor de fundo da navbar */
+            padding: 10px 20px;            /* Espaçamento interno */
+            border-radius: 5px;            /* Bordas arredondadas */
+            display: flex;                  /* Usando flexbox para alinhar os itens horizontalmente */
+            justify-content: center;        /* Centraliza os itens horizontalmente */
+            width: 100%;                   /* Faz a navbar ocupar 100% da largura */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Sombra suave */
+        }
+
+        /* Estilo dos botões da Navbar */
+        a {
+            margin: 0 10px;                /* Espaçamento entre os botões */
+            text-decoration: none;          /* Remove sublinhado dos links */
+            color: white;                  /* Cor do texto */
+            font-weight: bold;              /* Deixa o texto em negrito */
+            padding: 10px 20px;             /* Espaçamento interno do botão */
+            background-color: #0056b3;      /* Cor de fundo do botão */
+            border-radius: 5px;             /* Bordas arredondadas */
+            transition: background-color 0.3s ease; /* Transição suave ao passar o mouse */
+        }
+
+        /* Efeito hover para os botões */
+        a:hover {
+            background-color: #003d7a;      /* Muda a cor de fundo ao passar o mouse */
+            text-decoration: none;          /* Garante que o sublinhado não apareça */
+        }
+
+        /* Adicionando estilo responsivo para os gráficos */
+        @media (max-width: 768px) {
+            .chart-container {
+                width: 100%;
+            }
+
+            .chart-container img {
+                max-width: 90%;  /* Ajusta o gráfico para não ocupar 100% da tela em dispositivos móveis */
+                height: auto;  /* Mantém a proporção da imagem */
+            }
+
+            h1, h2 {
+                font-size: 1.5rem;  /* Diminui o tamanho dos títulos em telas menores */
+            }
+
+            nav {
+                flex-direction: column;  /* Alinha a navbar verticalmente em telas menores */
+                align-items: center;
+            }
+
+            a {
+                margin: 10px 0;  /* Adiciona espaço entre os botões na versão mobile */
+                width: 80%;      /* Faz os botões ocuparem mais espaço na tela */
+                text-align: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <h1>Imóveis DF</h1>
     <nav>
-        <a href="{% url 'home' %}">Home</a> |
-        <a href="{% url 'charts' %}">Gráficos</a> |
-        <a href="{% url 'reports' %}">Relatórios</a>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'graph_options' %}">Ver Gráficos</a>
     </nav>
     <hr>
     {% block content %}

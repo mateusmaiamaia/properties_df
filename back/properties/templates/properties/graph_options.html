@@ -1,0 +1,75 @@
+{% block content %}
+    <div style="text-align: center; padding: 20px;">
+        <h1>Escolha um Gráfico</h1>
+        
+        <!-- Botão que exibe/oculta as opções de gráficos -->
+        <button id="toggleCharts" style="padding: 15px 30px; background-color: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            Opções de Gráficos
+        </button>
+
+        <!-- Lista de gráficos que será exibida/ocultada -->
+        <div id="chartList" style="margin: 20px 0; display: none;">
+            <form id="chartForm">
+                <div style="margin: 10px 0;">
+                    <input type="radio" id="distribution_price_chart" name="chart" value="{% url 'distribution_price_chart' %}">
+                    <label for="distribution_price_chart">Distribuição de Preços</label>
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="radio" id="distribution_sqm_price_chart" name="chart" value="{% url 'distribution_sqm_price_chart' %}">
+                    <label for="distribution_sqm_price_chart">Distribuição de Preço por Metro Quadrado</label>
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="radio" id="area_properties_chart" name="chart" value="{% url 'area_properties_chart' %}">
+                    <label for="area_properties_chart">Distribuição de Área dos Imóveis</label>
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="radio" id="comparison_price_chart" name="chart" value="{% url 'comparison_price_chart' %}">
+                    <label for="comparison_price_chart">Comparação de Preços por Cidade</label>
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="radio" id="proportion_price_chart" name="chart" value="{% url 'proportion_price_chart' %}">
+                    <label for="proportion_price_chart">Proporção de Imóveis por Faixa de Preço</label>
+                </div>
+                <div style="margin: 10px 0;">
+                    <input type="radio" id="total_properties_by_city_chart" name="chart" value="{% url 'total_properties_by_city_chart' %}">
+                    <label for="total_properties_by_city_chart">Total de Imóveis por Cidade</label>
+                </div>
+            </form>
+        </div>
+
+        <!-- Botões de navegação -->
+        <div style="margin-top: 20px;">
+            <a href="{% url 'home' %}" style="padding: 15px 30px; background-color: #6c757d; color: white; border: none; border-radius: 5px; text-decoration: none; margin-right: 10px;">Voltar</a>
+            <button id="viewChart" style="padding: 15px 30px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;" disabled>Ver Gráfico</button>
+        </div>
+    </div>
+
+    <script>
+        // Função para alternar a exibição da lista de gráficos
+        document.getElementById('toggleCharts').onclick = function() {
+            const chartList = document.getElementById('chartList');
+            chartList.style.display = chartList.style.display === 'none' ? 'block' : 'none';
+        };
+
+        // Variável para armazenar a URL do gráfico selecionado
+        let selectedChartUrl = null;
+
+        // Função para lidar com a seleção de um gráfico
+        const chartForm = document.getElementById('chartForm');
+        const viewChartButton = document.getElementById('viewChart');
+
+        chartForm.addEventListener('change', function(event) {
+            if (event.target.name === 'chart') {
+                selectedChartUrl = event.target.value;
+                viewChartButton.disabled = false; // Habilita o botão "Ver Gráfico" quando uma opção é selecionada
+            }
+        });
+
+        // Função para redirecionar para o gráfico selecionado
+        viewChartButton.onclick = function() {
+            if (selectedChartUrl) {
+                window.location.href = selectedChartUrl;
+            }
+        };
+    </script>
+{% endblock %}
