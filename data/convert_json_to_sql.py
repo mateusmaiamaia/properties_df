@@ -64,6 +64,13 @@ def write_utf8_encoded(file, params):
     # Unifica o nome da cidade
     city_name = unify_city_name(city)
     
+    # Verifica o preço por metro quadrado
+    if sqm_price and sqm_price.isdigit():
+        sqm_price_int = int(sqm_price.replace('.', ''))  # Convertendo o preço por m² em inteiro
+        if sqm_price_int > 70000:
+            print(f"Valor por metro quadrado muito alto para {title} na cidade {city_name}: R$ {sqm_price}. Ignorado.")
+            return  # Ignora este imóvel
+
     if city_name:  # Se o nome da cidade foi unificado com sucesso
         # Cria o comando SQL
         sql_command = f"INSERT INTO properties (title, price, sqm_price, area, city, link) VALUES ('{title}', '{price}', '{sqm_price}', '{area}', '{city_name}', '{link}');\n"

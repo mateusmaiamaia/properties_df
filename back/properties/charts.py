@@ -4,6 +4,7 @@ import io
 import base64
 import re
 from .models import Property  
+from matplotlib.ticker import FuncFormatter
 
 def distribution_price_chart(properties):
     prices = [
@@ -120,13 +121,15 @@ def comparison_price_chart(properties):
     for p in properties:
         city = p.city
         if p.price != 'Sob Consulta':
-            price_cleaned = re.sub(r'[^\d]', '', p.price)
+            price_cleaned = re.sub(r'[^\d]', '', p.price)  # Remove caracteres não numéricos
             if price_cleaned:
                 price = int(price_cleaned)
-                if city in city_prices:
-                    city_prices[city].append(price)
-                else:
-                    city_prices[city] = [price]
+                # Verifica se o preço está dentro de um intervalo realista (1000 a 100 milhões)
+                if 1000 <= price <= 100000000:  # Agora ignoramos preços maiores que 100 milhões
+                    if city in city_prices:
+                        city_prices[city].append(price)
+                    else:
+                        city_prices[city] = [price]
 
     avg_prices = {city: sum(prices) / len(prices) for city, prices in city_prices.items()}
 
@@ -137,7 +140,15 @@ def comparison_price_chart(properties):
     ax.set_ylabel('Preço Médio (R$)')
     ax.set_xticklabels(avg_prices.keys(), rotation=45, ha='right')
 
+    # Função para formatar os valores do eixo Y com separador de milhar (R$ 1.000.000)
+    def format_currency(x, pos):
+        return f'R$ {x:,.0f}'  # Exibe valores com vírgula como separador de milhar
+
+    # Aplica o formatador ao eixo Y
+    ax.yaxis.set_major_formatter(FuncFormatter(format_currency))
+
     return convert_to_base64(fig)
+
 
 def proportion_price_chart(properties):
     price_ranges = {
