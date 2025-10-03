@@ -1,0 +1,10 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="display-4">Bem-vindo ao Sistema de Imóveis DF</h1>
+    <p class="lead">Use o menu de navegação acima para acessar o dashboard interativo e analisar os dados.</p>
+    <hr class="my-4">
+    <a class="btn btn-primary btn-lg" href="{% url 'dashboard' %}" role="button">Ir para o Dashboard</a>
+</div>
+{% endblock %}

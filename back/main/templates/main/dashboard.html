@@ -1,0 +1,593 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Dashboard de Análise - Imóveis DF{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos para os sliders */
+    .noUi-handle {
+        height: 18px;
+        width: 18px;
+        top: -6px;
+        right: -9px;
+        border-radius: 9px;
+        background: #fff;
+        border: 2px solid #4e73df;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .noUi-connect {
+        background: #4e73df;
+    }
+    
+    .noUi-target {
+        background: #f8f9fc;
+        border-radius: 4px;
+        border: 1px solid #d1d3e2;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .noUi-tooltip {
+        background: #4e73df;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 11px;
+    }
+
+    /* Estilo para a mensagem de "Nenhum dado encontrado" */
+    .chart-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 400px;
+        color: #6c757d;
+        font-size: 1.1rem;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    /* Melhorar cards */
+    .card {
+        border: none;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    /* Loading spinner */
+    #loading-spinner {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        z-index: 9999;
+    }
+
+    /* Labels dos sliders */
+    .slider-labels {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    /* Botão de exportar */
+    .btn-export {
+        background: #1cc88a;
+        border-color: #1cc88a;
+        color: white;
+    }
+    
+    .btn-export:hover {
+        background: #17a673;
+        border-color: #17a673;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Dashboard de Análise de Imóveis</h1>
+    </div>
+
+    <!-- Card de Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Filtros e Ações</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-end">
+                        <!-- Filtro de Cidade -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <label for="city-filter" class="form-label fw-semibold">Cidade</label>
+                            <select class="form-select" id="city-filter">
+                                <option value="all" selected>Todas as Cidades</option>
+                                {% for city in cities %}
+                                    <option value="{{ city }}">{{ city }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Slider de Preço -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <label for="price-slider" class="form-label fw-semibold">Faixa de Preço</label>
+                            <div id="price-slider" class="mt-2"></div>
+                            <div class="d-flex justify-content-between mt-2 slider-labels">
+                                <span id="price-min-label">R$ 100.000</span>
+                                <span id="price-max-label">R$ 5.000.000</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider de Área -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <label for="area-slider" class="form-label fw-semibold">Faixa de Área (m²)</label>
+                            <div id="area-slider" class="mt-2"></div>
+                            <div class="d-flex justify-content-between mt-2 slider-labels">
+                                <span id="area-min-label">20 m²</span>
+                                <span id="area-max-label">500 m²</span>
+                            </div>
+                        </div>
+
+                        <!-- Botão Exportar -->
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <label class="form-label fw-semibold d-block" style="visibility: hidden;">Exportar</label>
+                            <a id="export-csv-btn" href="{% url 'report_view' %}" class="btn btn-export w-100">
+                                <i class="fas fa-download me-2"></i>Exportar CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <!-- Gráfico de Barras - Preço por Cidade -->
+        <div class="col-xl-8 col-lg-7 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary" id="chart1-title">Preço Médio por Cidade</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Pizza - Proporção por Faixa de Preço -->
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary" id="chart2-title">Proporção por Faixa de Preço</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="position: relative; height: 400px;">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="d-none">
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mb-0 text-gray-600">Carregando dados...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Variáveis globais
+    const chartObjects = {};
+    let isUpdating = false;
+
+    // Inicialização quando o DOM estiver pronto
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeSliders();
+        initializeEventListeners();
+        
+        // Carregar dados iniciais após um pequeno delay
+        setTimeout(updateDashboard, 500);
+    });
+
+    function initializeSliders() {
+        // Slider de Preço
+        if (document.getElementById('price-slider')) {
+            noUiSlider.create(document.getElementById('price-slider'), {
+                start: [100000, 5000000],
+                connect: true,
+                step: 50000,
+                range: {
+                    'min': [100000],
+                    'max': [10000000]
+                },
+                tooltips: [true, true],
+                format: {
+                    to: function(value) {
+                        return Math.round(value);
+                    },
+                    from: function(value) {
+                        return Number(value);
+                    }
+                }
+            });
+        }
+
+        // Slider de Área
+        if (document.getElementById('area-slider')) {
+            noUiSlider.create(document.getElementById('area-slider'), {
+                start: [20, 500],
+                connect: true,
+                step: 10,
+                range: {
+                    'min': [20],
+                    'max': [2000]
+                },
+                tooltips: [true, true],
+                format: {
+                    to: function(value) {
+                        return Math.round(value);
+                    },
+                    from: function(value) {
+                        return Number(value);
+                    }
+                }
+            });
+        }
+
+        // Atualizar labels dos sliders
+        updateSliderLabels();
+    }
+
+    function initializeEventListeners() {
+        const priceSlider = document.getElementById('price-slider');
+        const areaSlider = document.getElementById('area-slider');
+        const cityFilter = document.getElementById('city-filter');
+
+        if (priceSlider && priceSlider.noUiSlider) {
+            priceSlider.noUiSlider.on('change', debounce(updateDashboard, 600));
+        }
+
+        if (areaSlider && areaSlider.noUiSlider) {
+            areaSlider.noUiSlider.on('change', debounce(updateDashboard, 600));
+        }
+
+        if (cityFilter) {
+            cityFilter.addEventListener('change', updateDashboard);
+        }
+    }
+
+    function updateSliderLabels() {
+        const priceSlider = document.getElementById('price-slider');
+        const areaSlider = document.getElementById('area-slider');
+
+        if (priceSlider && priceSlider.noUiSlider) {
+            const priceValues = priceSlider.noUiSlider.get();
+            document.getElementById('price-min-label').textContent = formatCurrency(priceValues[0]);
+            document.getElementById('price-max-label').textContent = formatCurrency(priceValues[1]);
+        }
+
+        if (areaSlider && areaSlider.noUiSlider) {
+            const areaValues = areaSlider.noUiSlider.get();
+            document.getElementById('area-min-label').textContent = `${Math.round(areaValues[0])} m²`;
+            document.getElementById('area-max-label').textContent = `${Math.round(areaValues[1])} m²`;
+        }
+    }
+
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+            minimumFractionDigits: 0
+        }).format(value);
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    async function updateDashboard() {
+        if (isUpdating) return;
+        
+        isUpdating = true;
+        showLoading(true);
+        updateSliderLabels();
+
+        try {
+            const queryParams = buildQueryParams();
+            await updateExportLink(queryParams);
+            await loadChartsData(queryParams);
+        } catch (error) {
+            console.error('Erro ao atualizar dashboard:', error);
+            showError('Erro ao carregar dados. Tente novamente.');
+        } finally {
+            isUpdating = false;
+            showLoading(false);
+        }
+    }
+
+    function buildQueryParams() {
+        const cityFilter = document.getElementById('city-filter').value;
+        const priceSlider = document.getElementById('price-slider');
+        const areaSlider = document.getElementById('area-slider');
+
+        const priceValues = priceSlider ? priceSlider.noUiSlider.get() : [100000, 5000000];
+        const areaValues = areaSlider ? areaSlider.noUiSlider.get() : [20, 500];
+
+        return new URLSearchParams({
+            city: cityFilter,
+            min_price: priceValues[0],
+            max_price: priceValues[1],
+            min_area: areaValues[0],
+            max_area: areaValues[1]
+        }).toString();
+    }
+
+    function updateExportLink(queryParams) {
+        const exportBtn = document.getElementById('export-csv-btn');
+        if (exportBtn) {
+            exportBtn.href = `{% url 'report_view' %}?${queryParams}`;
+        }
+    }
+
+    async function loadChartsData(queryParams) {
+        const chartsConfig = [
+            {
+                name: 'comparison_price',
+                canvasId: 'barChart',
+                titleId: 'chart1-title',
+                renderFunc: renderBarChart
+            },
+            {
+                name: 'proportion_price',
+                canvasId: 'pieChart',
+                titleId: 'chart2-title',
+                renderFunc: renderPieChart
+            }
+        ];
+
+        const promises = chartsConfig.map(config =>
+            fetch(`/api/chart-data/${config.name}/?${queryParams}`)
+                .then(handleResponse)
+                .catch(handleError)
+        );
+
+        const results = await Promise.all(promises);
+        
+        results.forEach((data, index) => {
+            const config = chartsConfig[index];
+            renderChart(config, data);
+        });
+    }
+
+    async function handleResponse(response) {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    function handleError(error) {
+        console.error('Erro na requisição:', error);
+        return {
+            error: error.message,
+            labels: [],
+            data: [],
+            title: 'Erro ao carregar dados'
+        };
+    }
+
+    function renderChart(config, data) {
+        const titleElement = document.getElementById(config.titleId);
+        
+        if (!titleElement) return;
+
+        if (data.error) {
+            titleElement.textContent = 'Erro ao carregar';
+            showPlaceholder(config.canvasId, `Erro: ${data.error}`);
+            return;
+        }
+
+        const hasValidData = data && 
+                           data.labels && 
+                           Array.isArray(data.labels) && 
+                           data.labels.length > 0 && 
+                           data.data && 
+                           Array.isArray(data.data) && 
+                           data.data.length > 0;
+
+        if (hasValidData) {
+            titleElement.textContent = data.title || 'Gráfico';
+            config.renderFunc(config.canvasId, data);
+        } else {
+            titleElement.textContent = data.title || 'Nenhum dado';
+            showPlaceholder(config.canvasId, 'Nenhum dado encontrado para os filtros selecionados.');
+        }
+    }
+
+    function renderBarChart(canvasId, apiData) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir chart anterior se existir
+        if (chartObjects[canvasId]) {
+            chartObjects[canvasId].destroy();
+        }
+
+        chartObjects[canvasId] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: apiData.labels,
+                datasets: [{
+                    label: apiData.datasetLabel || 'Valor',
+                    data: apiData.data,
+                    backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('pt-BR', {
+                                    style: 'currency',
+                                    currency: 'BRL',
+                                    notation: 'compact'
+                                }).format(value);
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                return `${label}: ${formatCurrency(value)}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderPieChart(canvasId, apiData) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        
+        // Destruir chart anterior se existir
+        if (chartObjects[canvasId]) {
+            chartObjects[canvasId].destroy();
+        }
+
+        chartObjects[canvasId] = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: apiData.labels,
+                datasets: [{
+                    data: apiData.data,
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e',
+                        '#e74a3b', '#6f42c1', '#fd7e14', '#20c997'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function showPlaceholder(canvasId, message) {
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+            const container = canvas.closest('.chart-container');
+            if (container) {
+                container.innerHTML = `<div class="chart-placeholder">${message}</div>`;
+            }
+        }
+    }
+
+    function showLoading(show) {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) {
+            if (show) {
+                spinner.classList.remove('d-none');
+            } else {
+                spinner.classList.add('d-none');
+            }
+        }
+    }
+
+    function showError(message) {
+        const charts = ['barChart', 'pieChart'];
+        charts.forEach(chartId => {
+            showPlaceholder(chartId, message);
+        });
+    }
+
+    // Re-renderizar charts quando a janela for redimensionada
+    window.addEventListener('resize', function() {
+        Object.values(chartObjects).forEach(chart => {
+            if (chart && typeof chart.resize === 'function') {
+                chart.resize();
+            }
+        });
+    });
+</script>
+{% endblock %}
